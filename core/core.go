@@ -71,11 +71,11 @@ import (
 	bserv "gx/ipfs/QmcRecCZWM2NZfCQrCe97Ch3Givv8KKEP82tGUDntzdLFe/go-blockservice"
 	"gx/ipfs/QmcjwUb36Z16NJkvDX6ccXPqsFswo6AsRXynyXcLLCphV2/go-path/resolver"
 	yamux "gx/ipfs/QmcsgrV3nCAKjiHKZhKVXWc4oY3WBECJCqahXEMpHeMrev/go-smux-yamux"
-	psrouter "gx/ipfs/Qmd547Rr4cZUEG5ETGHHNgx6xHBY4ee7hB6NAEBw2UWnea/go-libp2p-pubsub-router"
 	ipld "gx/ipfs/QmdDXJs4axxefSPgK6Y1QhpJWKuDPnGJiqgq4uncb4rFHL/go-ipld-format"
-	rhelpers "gx/ipfs/QmdELF3gxpecwBauFtZBib2fcnEEAbXiTVA1NSWZjf95Tp/go-libp2p-routing-helpers"
+	rhelpers "gx/ipfs/QmdrhAjJKSqpykiqkZt7CyVXUyy3R9W4ptmiW49MCWXLeG/go-libp2p-routing-helpers"
 	bstore "gx/ipfs/QmdriVJgKx4JADRgh3cYPXqXmsa1A45SvFki1nDWHhQNtC/go-ipfs-blockstore"
 	p2phost "gx/ipfs/QmeA5hsqgLryvkeyqeQdvGDqurLkYi3XEPLZP3pzuBJXh2/go-libp2p-host"
+	psrouter "gx/ipfs/QmeJrgriRkyAfJUuCEhwxboCsmbzrcWEFt1NeqYNUzvZ5x/go-libp2p-pubsub-router"
 	pstore "gx/ipfs/QmfAQMFpgDU2U4BXG64qVr8HSiictfWvkSBz7Y2oDj65st/go-libp2p-peerstore"
 )
 
@@ -523,14 +523,17 @@ func (n *IpfsNode) startOnlineServicesWithHost(ctx context.Context, host p2phost
 			n.RecordValidator,
 		)
 		n.Routing = rhelpers.Tiered{
-			// Always check pubsub first.
-			&rhelpers.Compose{
-				ValueStore: &rhelpers.LimitedValueStore{
-					ValueStore: n.PSRouter,
-					Namespaces: []string{"ipns"},
+			Routers: []routing.IpfsRouting{
+				// Always check pubsub first.
+				&rhelpers.Compose{
+					ValueStore: &rhelpers.LimitedValueStore{
+						ValueStore: n.PSRouter,
+						Namespaces: []string{"ipns"},
+					},
 				},
+				n.Routing,
 			},
-			n.Routing,
+			Validator: n.RecordValidator,
 		}
 	}
 
